@@ -27,7 +27,8 @@ $imageDefName = 'win10Images'
 
 # Create image gallery
 New-AzGallery -GalleryName $myGalleryName -ResourceGroupName $imageResourceGroup -Location $location
-#Create definition
+
+#Create image gallery definition
 $GalleryParams = @{
   GalleryName = $myGalleryName
   ResourceGroupName = $imageResourceGroup
@@ -41,7 +42,7 @@ $GalleryParams = @{
 }
 New-AzGalleryImageDefinition @GalleryParams
 
-# image definition
+# Azure Marketplace image definition
 $SrcObjParams = @{
   SourceTypePlatformImage = $true
   Publisher = 'MicrosoftWindowsDesktop'
@@ -49,6 +50,7 @@ $SrcObjParams = @{
   Sku = '20h1-evd-o365pp'
   Version = 'latest'
 }
+
 $srcPlatform = New-AzImageBuilderSourceObject @SrcObjParams
 
 # Image distributor object

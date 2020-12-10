@@ -146,7 +146,7 @@ $ImgCustomParams = @{
 }
 $Customizer = New-AzImageBuilderCustomizerObject @ImgCustomParams
 
-# Image builder template object
+# Create Image builder template object
 $ImgTemplateParams = @{
   ImageTemplateName = $imageTemplateName
   ResourceGroupName = $imageResourceGroup
@@ -158,7 +158,17 @@ $ImgTemplateParams = @{
 }
 New-AzImageBuilderTemplate @ImgTemplateParams
 
-
+# Create the refrence image build - could take a while
  Start-AzImageBuilderTemplate -ResourceGroupName $imageResourceGroup -Name $imageTemplateName
 
+# Create a VM from the reference image - only perform if you need to test image on a fresh VM
+
+$ArtifactId = (Get-AzImageBuilderRunOutput -ImageTemplateName $imageTemplateName -ResourceGroupName $imageResourceGroup).ArtifactId
+
+$cred = get-credential
+New-AzVM -ResourceGroupName $imageResourceGroup -Image $ArtifactId -Name myWinVM01 -Credential $Cred
+
 ###### Stop Execute #####
+
+# Run this to cleanup resources - delete the image builder template
+Remove-AzImageBuilderTemplate -ResourceGroupName $imageResourceGroup -Name $imageTemplateName

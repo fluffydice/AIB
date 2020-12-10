@@ -137,7 +137,6 @@ $disObjParams = @{
 }
 $disSharedImg = New-AzImageBuilderDistributorObject @disObjParams
 
-
 # Reference Image customisation object
 $ImgCustomParams = @{
   PowerShellCustomizer = $true

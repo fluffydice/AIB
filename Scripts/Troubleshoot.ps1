@@ -1,0 +1,2 @@
+# Get image builder template creation run state
+Get-AzImageBuilderTemplate -ImageTemplateName LP-WinImage2 -ResourceGroupName LP-IMAGEBUILDER2 | Select-Object -Property Name, LastRunStatusRunState, LastRunStatusMessage, ProvisioningState

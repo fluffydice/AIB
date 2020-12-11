@@ -1,67 +1,11 @@
 ﻿https://docs.microsoft.com/en-us/azure/virtual-machines/windows/image-builder
 # one off Setup variables
 
-# Install POSH modules for image builder
-'Az.ImageBuilder', 'Az.ManagedServiceIdentity' | ForEach-Object {Install-Module -Name $_ -AllowPrerelease}
-
-# Register Azure VM builder feature
-Register-AzProviderFeature -FeatureName virtualMAchinetemplatepreview
-
-# Get feature registration status
-Get-AzProviderFeature -featurename virtualmachinetemplatepreview -ProviderNamespace Microsoft.VirtualMachineimages
-
-# Get each resource provider registration status
-Get-AzResourceProvider -ProviderNamespace Microsoft.VirtualMachineimages
-
-# Register providers if needed
-Register-AzResourceProvider -ProviderNamespace Microsoft.VirtualMachineImages
-Register-AzResourceProvider -ProviderNamespace Microsoft.Storage
-Register-AzResourceProvider -ProviderNamespace Microsoft.KeyVault
-Register-AzResourceProvider -ProviderNamespace Microsoft.Compute
-
-# Create resource group used specially for AIB
-New-AzResourceGroup -Location $location -Name $imageResourceGroup
-
-# Install posh module
-Install-Module -Name Az.ManagedServiceIdentity -AllowPrerelease
-
-# create user assigned identity for image builder to access the storage account where the script is located
-$Manageduserident="JLaibBuiUserId$(get-date +'%s')"
-New-AzUserAssignedIdentity -ResourceGroupName $imageResourceGroup -Name $Manageduserident
-
-# download preconfigured custom role definition example
-(Invoke-WebRequest -Uri "https://raw.githubusercontent.com/danielsollondon/azvmimagebuilder/master/solutions/12_Creating_AIB_Security_Roles/aibRoleImageCreation.json").content | out-file C:\scratch\aibRoleImageCreation.json
-
-# get the user identity URI (id), needed for the custom role
-$imgBuilderId = (Get-AzUserAssignedIdentity -ResourceGroupName $imageResourceGroup).ID
-
-
-$imageRoleDefName = "Azure Image Builder Image R1"
-
-# update the role file definition file 
-(get-content C:\scratch\aibRoleImageCreation.json -raw) -replace '<subscriptionID>',$subscriptionID -replace '<rgName>',$imageResourceGroup -replace 'Azure Image Builder Service Image Creation Role', $imageRoleDefName | Set-Content C:\scratch\aibRoleImageCreation.json
-
-# create role definitions
-New-AzRoleDefinition -InputFile C:\Scratch\aibRoleImageCreation.json
-
-# grant role definition to the user assigned identity
-New-AzRoleAssignment -ApplicationId $imgBuilderCliId -RoleDefinitionName $imageRoleDefName -Scope "/subscriptions/$subscriptionID/resourceGroups/$imageResourceGroup"
-
-# Get example customiser template 
-(Invoke-WebRequest -Uri "https://raw.githubusercontent.com/danielsollondon/azvmimagebuilder/master/quickquickstarts/0_Creating_a_Custom_Windows_Managed_Image/helloImageTemplateWin.json").content | out-file C:\scratch\imgtemplate.json
-
-# Replace text in template
-
-(get-content C:\scratch\imgtemplate.json -raw) -replace '<subscriptionID>',$subscriptionID `
--replace 'rgName>',$imageResourceGroup `
--replace '<region>',$location `
--replace '<imageName>',$imageName `
--replace '<runOutputName>',$runOutputName `
--replace '<imgBuilderId>',$imgBuilderId `
-| Set-Content C:\scratch\imgtemplate.json
-
 ##### Variables #####
 
+# managed user identity client id
+$Manageduserident = 'JLaibBuiUserId'
+$imageRoleDefName = "Azure Image Builder Image R1"
 # Resource group name - we are using myImageBuilderRG in this example
 $imageResourceGroup="JL-IMAGEBUILDER"
 # Region location 
@@ -88,15 +32,73 @@ $galsku = 'Win10'
 $Publisher = 'MicrosoftWindowsDesktop'
 $offer = 'windows-10'
 $sku = '20h2-ent'
+# New VM parameters
+$VMLocalAdminUser = "bob"
+$VMLocalAdminSecurePassword = ConvertTo-SecureString "NotMouseTrap1793" -AsPlainText -Force
+$VMSize = "Standard_D2s_v3"
+$VMName = "MyVM"
 
-###### Execute ######
 
-# get identity client id
+##### Setup #####
 
-$Manageduserident = 'JLaibBuiUserId'
+# Install POSH modules for image builder
+'Az.ImageBuilder', 'Az.ManagedServiceIdentity' | ForEach-Object {Install-Module -Name $_ -AllowPrerelease}
+
+# Register Azure VM builder feature
+Register-AzProviderFeature -FeatureName virtualMAchinetemplatepreview
+
+# Get feature registration status
+Get-AzProviderFeature -featurename virtualmachinetemplatepreview -ProviderNamespace Microsoft.VirtualMachineimages
+
+# Get each resource provider registration status
+Get-AzResourceProvider -ProviderNamespace Microsoft.VirtualMachineimages
+
+# Register providers if needed
+Register-AzResourceProvider -ProviderNamespace Microsoft.VirtualMachineImages
+Register-AzResourceProvider -ProviderNamespace Microsoft.Storage
+Register-AzResourceProvider -ProviderNamespace Microsoft.KeyVault
+Register-AzResourceProvider -ProviderNamespace Microsoft.Compute
+
+# Create resource group used specially for AIB
+New-AzResourceGroup -Location $location -Name $imageResourceGroup
+
+# Install posh module
+Install-Module -Name Az.ManagedServiceIdentity -AllowPrerelease
+
+# create user assigned identity for image builder to access the storage account where the script is located
+New-AzUserAssignedIdentity -ResourceGroupName $imageResourceGroup -Name $Manageduserident
+
+# download preconfigured custom role definition example
+(Invoke-WebRequest -Uri "https://raw.githubusercontent.com/danielsollondon/azvmimagebuilder/master/solutions/12_Creating_AIB_Security_Roles/aibRoleImageCreation.json").content | out-file C:\scratch\aibRoleImageCreation.json
+
+# get the user identity URI (id), needed for the custom role
+$imgBuilderId = (Get-AzUserAssignedIdentity -ResourceGroupName $imageResourceGroup).ID
+
+# update the role file definition file 
+(get-content C:\scratch\aibRoleImageCreation.json -raw) -replace '<subscriptionID>',$subscriptionID -replace '<rgName>',$imageResourceGroup -replace 'Azure Image Builder Service Image Creation Role', $imageRoleDefName | Set-Content C:\scratch\aibRoleImageCreation.json
+
+# create role definitions
+New-AzRoleDefinition -InputFile C:\Scratch\aibRoleImageCreation.json
+
+# grant role definition to the user assigned identity
 $imgBuilderCliId = (Get-AzUserAssignedIdentity -ResourceGroupName $imageResourceGroup -Name $Manageduserident).ClientID
 $identityNameResourceId = (Get-AzUserAssignedIdentity -ResourceGroupName $imageResourceGroup -Name $Manageduserident).Id
-$identityNamePrincipalId = (Get-AzUserAssignedIdentity -ResourceGroupName $imageResourceGroup -Name $Manageduserident).PrincipalId
+New-AzRoleAssignment -ApplicationId $imgBuilderCliId -RoleDefinitionName $imageRoleDefName -Scope "/subscriptions/$subscriptionID/resourceGroups/$imageResourceGroup"
+
+# Get example customiser template 
+(Invoke-WebRequest -Uri "https://raw.githubusercontent.com/danielsollondon/azvmimagebuilder/master/quickquickstarts/0_Creating_a_Custom_Windows_Managed_Image/helloImageTemplateWin.json").content | out-file C:\scratch\imgtemplate.json
+
+# Replace text in template
+
+(get-content C:\scratch\imgtemplate.json -raw) -replace '<subscriptionID>',$subscriptionID `
+-replace 'rgName>',$imageResourceGroup `
+-replace '<region>',$location `
+-replace '<imageName>',$imageName `
+-replace '<runOutputName>',$runOutputName `
+-replace '<imgBuilderId>',$imgBuilderId `
+| Set-Content C:\scratch\imgtemplate.json
+
+###### Execute ######
 
 # Create image gallery
 New-AzGallery -GalleryName $myGalleryName -ResourceGroupName $imageResourceGroup -Location $location
@@ -165,8 +167,12 @@ New-AzImageBuilderTemplate @ImgTemplateParams
 
 $ArtifactId = (Get-AzImageBuilderRunOutput -ImageTemplateName $imageTemplateName -ResourceGroupName $imageResourceGroup).ArtifactId
 
-$cred = get-credential
-New-AzVM -ResourceGroupName $imageResourceGroup -Image $ArtifactId -Name myWinVM01 -Credential $Cred
+
+New-AzVM  `
+-ResourceGroupName $imageResourceGroup 
+-Image $ArtifactId 
+-Name myWinVM01 
+-Credential $Cred
 
 ###### Stop Execute #####
 

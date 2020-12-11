@@ -16,7 +16,7 @@ $imageName="myWinBuilderImage"
 $runOutputName="Windows10"
 # name of the image to be created
 $imageName="JLaibWinImage"
-# Name of the image to be created
+# Name of the image template to be created
 $imageTemplateName = 'JLWin10-20h2'
 # Sub ID
 $subscriptionID="cc1ccb8d-18a1-4dca-aa5a-54607876c990"
@@ -146,8 +146,6 @@ $ImgCustomParams = @{
   RunElevated = $false
   Inline = @("mkdir c:\\buildActions", "echo JL Azure-Image-Builder-Was-Here  > c:\\buildActions\\buildActionsOutput.txt")
 }
-
-# IMAGE BUILDER - This creates template file within the resource group containing; Source Image, Distributor config and Customisation config
 $Customizer = New-AzImageBuilderCustomizerObject @ImgCustomParams
 
 # Create Image builder template object
@@ -160,20 +158,28 @@ $ImgTemplateParams = @{
   Location = $location
   UserAssignedIdentityId = $identityNameResourceId
 }
+
+# IMAGE BUILDER - This creates template file within the resource group containing; Source Image, Distributor config and Customisation config.
+# Only accessible from Powershell.
+# This also creates 'staging' resource group used by the build like - IT_<DestinationResourceGroup>_<TemplateName>
 New-AzImageBuilderTemplate @ImgTemplateParams
 
-# Create the refrence image build - could take a while
+# Create the refrence image build / Submit to the Image Builder service - could take a while
  Start-AzImageBuilderTemplate -ResourceGroupName $imageResourceGroup -Name $imageTemplateName
 
-# Create a VM from the reference image - only perform if you need to test image on a fresh VM
+# Create a VM from the new reference image - only perform if you need to test build on a fresh VM
+# Uses Image Builder template to define parameters needed to deploy the image to VM
 
 $ArtifactId = (Get-AzImageBuilderRunOutput -ImageTemplateName $imageTemplateName -ResourceGroupName $imageResourceGroup).ArtifactId
 
-New-AzVM  `
--ResourceGroupName $imageResourceGroup 
--Image $ArtifactId 
--Name myWinVM01 
--Credential $Cred
+$cred = get-credential
+
+New-AzVM `
+-ResourceGroupName $imageResourceGroup `
+-Image $ArtifactId `
+-Name myWinVM01 `
+-Credential $Cred `
+-Size $VMSize
 
 ###### Stop Execute #####
 

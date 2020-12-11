@@ -117,7 +117,7 @@ $GalleryParams = @{
 }
 New-AzGalleryImageDefinition @GalleryParams
 
-# Azure Marketplace source image definition
+# IMAGE BUILDER - source image definition
 $SrcObjParams = @{
   SourceTypePlatformImage = $true
   Publisher = $Publisher
@@ -128,7 +128,7 @@ $SrcObjParams = @{
 
 $srcPlatform = New-AzImageBuilderSourceObject @SrcObjParams
 
-# Image distributor object
+# IMAGE BUILDER - distributor object
 $disObjParams = @{
   SharedImageDistributor = $true
   ArtifactTag = @{tag='dis-share'}
@@ -139,13 +139,15 @@ $disObjParams = @{
 }
 $disSharedImg = New-AzImageBuilderDistributorObject @disObjParams
 
-# Reference Image customisation object
+# IMAGE BUILDER - Customisation object
 $ImgCustomParams = @{
   PowerShellCustomizer = $true
   CustomizerName = 'JL-filesystem-mod'
   RunElevated = $false
   Inline = @("mkdir c:\\buildActions", "echo JL Azure-Image-Builder-Was-Here  > c:\\buildActions\\buildActionsOutput.txt")
 }
+
+# IMAGE BUILDER - This creates template file within the resource group containing; Source Image, Distributor config and Customisation config
 $Customizer = New-AzImageBuilderCustomizerObject @ImgCustomParams
 
 # Create Image builder template object
@@ -166,7 +168,6 @@ New-AzImageBuilderTemplate @ImgTemplateParams
 # Create a VM from the reference image - only perform if you need to test image on a fresh VM
 
 $ArtifactId = (Get-AzImageBuilderRunOutput -ImageTemplateName $imageTemplateName -ResourceGroupName $imageResourceGroup).ArtifactId
-
 
 New-AzVM  `
 -ResourceGroupName $imageResourceGroup 

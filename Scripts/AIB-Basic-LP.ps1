@@ -183,10 +183,10 @@ Remove-AzImageBuilderTemplate -ImageTemplateName $imageTemplateName -ResourceGro
 # Start the image build (submit image to AIB service)
 #####################################################
 
-# This can take up to an hour (cmdlet may return before actual completion...????)
+# This can take up to an hour
 Start-AzImageBuilderTemplate -ResourceGroupName $imageResourceGroup -Name $imageTemplateName
 
-# Check status - presumably ok if succeeded returned for provisioning state?
+# Check status
 Get-AzImageBuilderTemplate -ImageTemplateName  $imageTemplateName -ResourceGroupName $imageResourceGroup | Select-Object ProvisioningState, ProvisioningErrorMessage
 
 
@@ -199,7 +199,23 @@ Get-AzImageBuilderTemplate -ImageTemplateName  $imageTemplateName -ResourceGroup
 ################################################
 $Cred = Get-Credential
 
-# Fails as no artifactid 
 $ArtifactId = (Get-AzImageBuilderRunOutput -ImageTemplateName $imageTemplateName -ResourceGroupName $imageResourceGroup).ArtifactId
 New-AzVM -ResourceGroupName $imageResourceGroup -Image $ArtifactId -Name LP0003 -Credential $Cred
 
+
+
+
+
+
+################################################
+# Tidy up and removal
+################################################
+
+$imageTemplateName = 'LP-WinImage12'
+$imageResourceGroup = 'LP-IMAGEBUILDER12'
+
+Get-AzImageBuilderTemplate -ImageTemplateName $imageTemplateName -ResourceGroupName $imageResourceGroup | Select-Object -Property Name, LastRunStatusRunState, LastRunStatusMessage, ProvisioningState
+
+Remove-AzImageBuilderTemplate -ImageTemplateName $imageTemplateName -ResourceGroupName $imageResourceGroup
+
+Remove-AzResourceGroup -Name 'LP-IMAGEBUILDER2' -Force

@@ -216,6 +216,8 @@ $imageResourceGroup = 'LP-IMAGEBUILDER12'
 
 Get-AzImageBuilderTemplate -ImageTemplateName $imageTemplateName -ResourceGroupName $imageResourceGroup | Select-Object -Property Name, LastRunStatusRunState, LastRunStatusMessage, ProvisioningState
 
+# The AIB template removal below will result in automatic removal of the staging RG (starts with 'IT')
 Remove-AzImageBuilderTemplate -ImageTemplateName $imageTemplateName -ResourceGroupName $imageResourceGroup
 
+# Removal of RG for other resources
 Remove-AzResourceGroup -Name 'LP-IMAGEBUILDER2' -Force

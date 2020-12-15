@@ -35,50 +35,45 @@
         "customize": [
             {
                 "type": "PowerShell",
-                "name": "CreateBuildPath",
-                "runElevated": false,
-                "scriptUri": "https://raw.githubusercontent.com/danielsollondon/azvmimagebuilder/master/testPsScript.ps1"
-            },
-            {
-                "type": "WindowsRestart",
-                "restartCheckCommand": "echo Azure-Image-Builder-Restarted-the-VM  > c:\\buildArtifacts\\azureImageBuilderRestart.txt",
-                "restartTimeout": "5m"
-            },
-            {
-                "type": "File",
-                "name": "downloadBuildArtifacts",
-                "sourceUri": "https://raw.githubusercontent.com/danielsollondon/azvmimagebuilder/master/quickquickstarts/exampleArtifacts/buildArtifacts/index.html",
-                "destination":"c:\\buildArtifacts\\index.html"
-            },
-
-            {
-                "type": "PowerShell",
-                "name": "settingUpMgmtAgtPath",
+                "name": "SetupRunStructure",
                 "runElevated": false,
                 "inline": [
                     "mkdir c:\\buildActions",
-                    "echo Azure-Image-Builder-Was-Here  > c:\\buildActions\\buildActionsOutput.txt"
-                ]
+                    "$(get-date) - Start Customisation Actions  > c:\\buildActions\\buildCustomiser.log",
+                    "$(get-date) - Start Download of binaries"
+                    ]
                 },
-                {
-                    "type": "WindowsUpdate",
-                    "searchCriteria": "IsInstalled=0",
-                    "filters": [
-                        "exclude:$_.Title -like '*Preview*'",
-                        "include:$true"
-                                ],
-                    "updateLimit": 20
-                }
+            {
+                "type": "File",
+                "name": "downloadBuildArtifacts",
+                "sourceUri": "https://github.com/fluffydice/AIB/blob/main/Binaries/putty-0.74.msi",
+                "destination":"c:\\buildActions\\putty-0.74.msi"
+            },
+            {
+                "type": "PowerShell",
+                "name": "ExecuteAppInstall",
+                "runElevated": true,
+                "inline": [             
+                    "$(get-date) - Download complete",
+                    "$(get-date) - Start Execution of App",
+                    "Start-Process msiexec.exe -Wait -ArgumentList '/I C:\\buildactions\\putty-0.74.msi /quiet /log C:\\buildActions\\Putty.log'"
+                    ]
+                },
+            {
+                "type": "WindowsRestart",
+                "restartCheckCommand": "echo Azure-Image-Builder-Restarted-the-VM-POST-APPS  >> c:\\buildActions\\azureImageBuilderRestart.txt",
+                "restartTimeout": "5m"
+            }
         ],
         "distribute": 
             [
-                {   "type":"ManagedImage",
-                    "imageId": "/subscriptions/cc1ccb8d-18a1-4dca-aa5a-54607876c990/resourceGroups/<JL-IMAGEBUILDER/providers/Microsoft.Compute/images/JLaibWinImage",
+                {   "type":"SharedImage",
+                    "imageId": "/subscriptions/cc1ccb8d-18a1-4dca-aa5a-54607876c990/resourceGroups/JL-IMAGEBUILDER/providers/Microsoft.Compute/galleries/IMGGALLERYJL/images/win10Images",
                     "location": "NorthEurope",
-                    "runOutputName": "aibWindows",
+                    "runOutputName": "Windows10v2",
                     "artifactTags": {
                         "source": "azVmImageBuilder",
-                        "baseosimg": "windows10_2004"
+                        "baseosimg": "20h2-ent"
                     }
                 }
             ]

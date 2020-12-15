@@ -27,9 +27,9 @@
         "source": {
             "type": "PlatformImage",
                 "publisher": "MicrosoftWindowsDesktop",
-                "offer": "windows-10-2004-vhd-client-office-prod-stage",
-                "sku": "20h1-evd-o365pp",
-                "version": "19041.630.2011061636"
+                "offer": "windows-10",
+                "sku": "20h2-ent",
+                "version": "latest"
             
         },
         "customize": [

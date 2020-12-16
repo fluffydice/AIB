@@ -1,0 +1,145 @@
+{
+    "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "apiVersion": {
+            "type": "string"
+        },
+        "location": {
+            "type": "string"
+        },
+        "subscriptionID": {
+            "type": "string"
+        },
+        "imageTemplateName": {
+            "type": "string"
+        },
+        "imageTemplateTag": {
+            "type": "string"
+        },
+        "imageName": {
+            "type": "string"
+        },
+        "resourceGroupName": {
+            "type": "string"
+        },
+        "publisher": {
+            "type": "string"
+        },
+        "offer": {
+            "type": "string"
+        },
+        "sku": {
+            "type": "string"
+        },
+        "vmSize": {
+            "type": "string"
+        },
+        "vmDiskSize": {
+            "type": "int"
+        },
+        "buildTimeoutInMinutes": {
+            "type": "int"
+        },
+        "runOutputName": {
+            "type": "string"
+        },
+        "identityNameResourceId": {
+            "type": "string"
+        }
+    },
+    
+    "variables": {
+    },
+
+    "resources": [
+      {
+    "name": "[parameters('imageTemplateName')]",
+    "type": "Microsoft.VirtualMachineImages/imageTemplates",
+    "apiVersion": "[parameters('apiVersion')]",
+    "location": "[parameters('location')]",
+    "dependsOn": [],
+    "tags": {
+        "imagebuilderTemplate": "[parameters('imageTemplateTag')]",
+        "userIdentity": "enabled"
+            },
+        "identity": {
+            "type": "UserAssigned",
+                    "userAssignedIdentities": {
+                    "[parameters('identityNameResourceId')]": {}
+                        
+                }
+                },
+    "properties": {
+
+        "buildTimeoutInMinutes" : "[parameters('buildTimeoutInMinutes')]",
+
+        "vmProfile": 
+                {
+                "vmSize": "[parameters('vmSize')]",
+                "osDiskSizeGB": "[parameters('vmDiskSize')]"
+                },
+        
+        "source": {
+            "type": "PlatformImage",
+                "publisher": "[parameters('publisher')]",
+                "offer": "[parameters('offer')]",
+                "sku": "[parameters('sku')]",
+                "version": "latest"
+            
+        },
+        "customize": [
+            {
+                "type": "PowerShell",
+                "name": "CreateBuildPath",
+                "runElevated": false,
+                "scriptUri": "https://raw.githubusercontent.com/danielsollondon/azvmimagebuilder/master/testPsScript.ps1"
+            },
+            {
+                "type": "WindowsRestart",
+                "restartCheckCommand": "echo Azure-Image-Builder-Restarted-the-VM  > c:\\buildArtifacts\\azureImageBuilderRestart.txt",
+                "restartTimeout": "5m"
+            },
+            {
+                "type": "File",
+                "name": "downloadBuildArtifacts",
+                "sourceUri": "https://raw.githubusercontent.com/danielsollondon/azvmimagebuilder/master/quickquickstarts/exampleArtifacts/buildArtifacts/index.html",
+                "destination":"c:\\buildArtifacts\\index.html"
+            },
+
+            {
+                "type": "PowerShell",
+                "name": "settingUpMgmtAgtPath",
+                "runElevated": false,
+                "inline": [
+                    "mkdir c:\\buildActions",
+                    "echo Azure-Image-Builder-Was-Here  > c:\\buildActions\\buildActionsOutput.txt"
+                ]
+                },
+                {
+                    "type": "WindowsUpdate",
+                    "searchCriteria": "IsInstalled=0",
+                    "filters": [
+                        "exclude:$_.Title -like '*Preview*'",
+                        "include:$true"
+                                ],
+                    "updateLimit": 20
+                }
+        ],
+        "distribute": 
+            [
+                {   "type":"ManagedImage",
+                    "imageId": "[Concat('/subscriptions/',parameters('subscriptionID'),'/resourceGroups/',parameters('resourceGroupName'),'/providers/Microsoft.Compute/images/',parameters('imageName'))]",
+                    "location": "[parameters('location')]",
+                    "runOutputName": "[parameters('runOutputName')]",
+                    "artifactTags": {
+                        "source": "azVmImageBuilder",
+                        "baseosimg": "[parameters('imageTemplateTag')]"
+                    }
+                }
+            ]
+        }
+    }
+]
+
+}

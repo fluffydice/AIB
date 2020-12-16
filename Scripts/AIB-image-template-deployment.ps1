@@ -1,0 +1,1 @@
+New-AzResourceGroupDeployment -ResourceGroupName JL-IMAGEBUILDER -TemplateFile .\templates\AIB-Image-template.json -imageTemplateName JL-Win10-Inc-Putty-App -svclocation $location

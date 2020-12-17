@@ -1,81 +1,111 @@
 {
-    "type": "Microsoft.VirtualMachineImages/imageTemplates",
-    "apiVersion": "2019-05-01-preview",
-    "location": "NorthEurope",
-    "dependsOn": [],
-    "tags": {
-        "imagebuilderTemplate": "windows10_2004",
-        "userIdentity": "enabled"
-            },
-        "identity": {
-            "type": "UserAssigned",
-                    "userAssignedIdentities": {
-                    "/subscriptions/cc1ccb8d-18a1-4dca-aa5a-54607876c990/resourcegroups/JL-IMAGEBUILDER/providers/Microsoft.ManagedIdentity/userAssignedIdentities/JLaibBuiUserId": {}
-                        
-                }
-                },
-    "properties": {
-
-        "buildTimeoutInMinutes" : 100,
-
-        "vmProfile": 
-                {
-                "vmSize": "Standard_D2_v2",
-                "osDiskSizeGB": 127
-                },
-        
-        "source": {
-            "type": "PlatformImage",
-                "publisher": "MicrosoftWindowsDesktop",
-                "offer": "windows-10",
-                "sku": "20h2-ent",
-                "version": "latest"
-            
+    "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+      "imageTemplateName": {
+        "type": "string"
         },
-        "customize": [
-            {
-                "type": "PowerShell",
-                "name": "SetupRunStructure",
-                "runElevated": false,
-                "inline": [
-                    "mkdir c:\\buildActions",
-                    "$(get-date) - Start Customisation Actions  > c:\\buildActions\\buildCustomiser.log",
-                    "$(get-date) - Start Download of binaries"
-                    ]
-                },
-            {
-                "type": "File",
-                "name": "downloadBuildArtifacts",
-                "sourceUri": "https://github.com/fluffydice/AIB/blob/main/Binaries/putty-0.74.msi",
-                "destination":"c:\\buildActions\\putty-0.74.msi"
-            },
-            {
-                "type": "PowerShell",
-                "name": "ExecuteAppInstall",
-                "runElevated": true,
-                "inline": [             
-                    "$(get-date) - Download complete",
-                    "$(get-date) - Start Execution of App",
-                    "Start-Process msiexec.exe -Wait -ArgumentList '/I C:\\buildactions\\putty-0.74.msi /quiet /log C:\\buildActions\\Putty.log'"
-                    ]
-                },
-            {
-                "type": "WindowsRestart",
-                "restartCheckCommand": "echo Azure-Image-Builder-Restarted-the-VM-POST-APPS  >> c:\\buildActions\\azureImageBuilderRestart.txt",
-                "restartTimeout": "5m"
-            }
-        ],
-        "distribute": 
-            [
-                {   "type":"SharedImage",
-                    "imageId": "/subscriptions/cc1ccb8d-18a1-4dca-aa5a-54607876c990/resourceGroups/JL-IMAGEBUILDER/providers/Microsoft.Compute/galleries/IMGGALLERYJL/images/win10Images",
-                    "location": "NorthEurope",
-                    "runOutputName": "Windows10v2",
-                    "artifactTags": {
-                        "source": "azVmImageBuilder",
-                        "baseosimg": "20h2-ent"
-                    }
-                }
-            ]
+        "api-version": {
+          "type": "string"
+        },
+        "svclocation": {
+            "type": "string"
         }
-}
+    },
+    
+    "variables": {
+    },
+
+
+    "resources": [
+        {
+            "name": "[parameters('imageTemplateName')]",
+            "type": "Microsoft.VirtualMachineImages/imageTemplates",
+            "apiVersion": "[parameters('api-version')]",
+            "location": "[parameters('svclocation')]",
+            "dependsOn": [],
+            "tags": 
+                {
+                    "imagebuilderTemplate": "windows10_2004",
+                    "userIdentity": "enabled"
+                },
+            "identity": 
+                {
+                    "type": "UserAssigned",
+                    "userAssignedIdentities": 
+                        {
+                            "/subscriptions/cc1ccb8d-18a1-4dca-aa5a-54607876c990/resourcegroups/JL-IMAGEBUILDER/providers/Microsoft.ManagedIdentity/userAssignedIdentities/JLaibBuiUserId": {}
+                        }
+                },      
+            "properties": 
+                {
+                    "buildTimeoutInMinutes" : 100,
+                    "vmProfile": 
+                {
+                    "vmSize": "Standard_D2_v2",
+                    "osDiskSizeGB": 127
+                },
+            "source": 
+                {
+                    "type": "PlatformImage",
+                    "publisher": "MicrosoftWindowsDesktop",
+                    "offer": "windows-10",
+                    "sku": "20h2-ent",
+                    "version": "latest"      
+                },
+            "customize": 
+               [
+                    {
+                        "type": "PowerShell",
+                        "name": "SetupRunStructure",
+                        "runElevated": false,
+                        "inline": 
+                            [
+                                "mkdir c:\\buildActions",
+                                "$(get-date) - Start Customisation Actions  > c:\\buildActions\\buildCustomiser.log",
+                                "$(get-date) - Start Download of binaries"
+                            ]
+                    },
+                    {
+                        "type": "File",
+                        "name": "downloadBuildArtifacts",
+                        "sourceUri": "https://github.com/fluffydice/AIB/blob/main/Binaries/putty-0.74.msi",
+                        "destination":"c:\\buildActions\\putty-0.74.msi"
+                    },
+                    {
+                        "type": "PowerShell",
+                        "name": "ExecuteAppInstall",
+                        "runElevated": true,
+                        "inline": 
+                            [             
+                                "$(get-date) - Download complete",
+                                "$(get-date) - Start Execution of App",
+                                "Start-Process msiexec.exe -Wait -ArgumentList '/I C:\\buildactions\\putty-0.74.msi /quiet /log C:\\buildActions\\Putty.log'"
+                            ]
+                    },
+                    {
+                        "type": "WindowsRestart",
+                        "restartCheckCommand": "echo Azure-Image-Builder-Restarted-the-VM-POST-APPS  >> c:\\buildActions\\azureImageBuilderRestart.txt",
+                        "restartTimeout": "5m"
+                    }
+                ],
+                "distribute": 
+                    [
+                        {
+                            "type":"SharedImage",
+                            "imageId": "/subscriptions/cc1ccb8d-18a1-4dca-aa5a-54607876c990/resourceGroups/JL-IMAGEBUILDER/providers/Microsoft.Compute/galleries/IMGGALLERYJL/images/win10Images",
+                            "location": "NorthEurope",
+                            "runOutputName": "Windows10v2",
+                            "artifactTags": 
+                                {
+                                    "source": "azVmImageBuilder",
+                                    "baseosimg": "20h2-ent"
+                                }
+                        }
+                    ]
+            }
+    }
+
+    
+    ]
+} 

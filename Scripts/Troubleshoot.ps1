@@ -1,5 +1,5 @@
 # Get image builder template creation run state - only method to troubleshoot template creation errors
-Get-AzImageBuilderTemplate -ImageTemplateName LP-WinImage2 -ResourceGroupName LP-IMAGEBUILDER2 | Select-Object -Property Name, LastRunStatusRunState, LastRunStatusMessage, ProvisioningState
+Get-AzImageBuilderTemplate -ImageTemplateName $imageTemplateName -ResourceGroupName $ResourceGroup | Select-Object -Property Name, LastRunStatusRunState, LastRunStatusMessage, ProvisioningState
 
 # Get image builder template info
 

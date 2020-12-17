@@ -2,6 +2,9 @@
     "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
     "contentVersion": "1.0.0.0",
 "parameters": {
+        "Gallery": {
+            "type": "string"
+        },
         "apiVersion": {
             "type": "string"
         },
@@ -20,7 +23,7 @@
         "imageName": {
             "type": "string"
         },
-        "resourceGroupName": {
+        "rGroupName": {
             "type": "string"
         },
         "publisher": {
@@ -68,7 +71,10 @@
             "identity": 
                 {
                     "type": "UserAssigned",
-                    "[parameters('identityNameResourceId')]": {}
+                    "UserAssignedIdentities": {
+                        "[parameters('identityNameResourceId')]": {}
+                    }
+                    
                 },      
             "properties": 
                 {
@@ -126,14 +132,14 @@
                     [
                         {
                             "type": "SharedImage",
-                            "imageId": "[Concat('/subscriptions/',parameters('subscriptionID'),'/resourceGroups/',parameters('resourceGroupName'),'/providers/Microsoft.Compute/images/',parameters('imageName'))]",
-                            "location": "NorthEurope",
+                            "GalleryImageId": "[Concat('/subscriptions/',parameters('subscriptionID'),'/resourceGroups/',parameters('rgroupname'),'/providers/Microsoft.Compute/galleries/',parameters('Gallery'),'/images/',parameters('imageName'))]",
                             "runOutputName": "[parameters('runOutputName')]",
                             "artifactTags": 
                                 {
                                     "source": "azVmImageBuilder",
                                     "baseosimg": "20h2-ent"
-                                }
+                                },
+                            "replicationRegions": []
                         }
                     ]
             }

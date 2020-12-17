@@ -20,7 +20,7 @@
         "imageName": {
             "type": "string"
         },
-        "resourceGroupName": {
+        "rgroupname": {
             "type": "string"
         },
         "publisher": {
@@ -129,7 +129,7 @@
         "distribute": 
             [
                 {   "type":"ManagedImage",
-                    "imageId": "[Concat('/subscriptions/',parameters('subscriptionID'),'/resourceGroups/',parameters('resourceGroupName'),'/providers/Microsoft.Compute/images/',parameters('imageName'))]",
+                    "imageId": "[Concat('/subscriptions/',parameters('subscriptionID'),'/resourceGroups/',parameters('rgroupname'),'/providers/Microsoft.Compute/images/',parameters('imageName'))]",
                     "location": "[parameters('location')]",
                     "runOutputName": "[parameters('runOutputName')]",
                     "artifactTags": {

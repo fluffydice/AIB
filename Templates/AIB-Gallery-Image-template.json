@@ -119,7 +119,7 @@
                             [             
                                 "$(get-date) - Download complete",
                                 "$(get-date) - Start Execution of App",
-                                "Start-Process msiexec.exe -Wait -ArgumentList '/I C:\\buildactions\\putty-0.74.msi /quiet /log C:\\buildActions\\Putty.log'"
+                                "invoke-expression -command 'msiexec.exe /I C:\\buildactions\\putty-0.74.msi /quiet /log C:\\buildActions\\Putty.log'"
                             ]
                     },
                     {
@@ -139,7 +139,11 @@
                                     "source": "azVmImageBuilder",
                                     "baseosimg": "20h2-ent"
                                 },
-                            "replicationRegions": []
+                            "replicationRegions": 
+                                [
+                                    "northeurope",
+                                    "uksouth"
+                                ]
                         }
                     ]
             }
